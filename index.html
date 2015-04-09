@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport"     content="width=device-width, initial-scale=1.0">
+		<meta name="description"  content="Sort instagram photos">
+		<meta name="author"       content="4_pr0n">
+		<link rel="shortcut icon" href="favicon.png">
+
+		<title>InstaTop</title>
+
+		<link rel="stylesheet" href="./css/bootstrap.min.css">
+		<link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="./css/toastr.css">
+		<link rel="stylesheet" href="./css/bootstrap-slate.min.css">
+
+		<script src="./js/jquery-1.11.2.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="./js/toastr.js"></script>
+		<script src="./js/knockout-3.3.0.debug.js"></script>
+		<script src="./js/main.js"></script>
+
+		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+		<nav class="navbar navbar-default">
+			<div class="container-fluid">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="./">InstaTop</a>
+				</div>
+
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+						<li class="dropdown" data-bind="if: recents().length > 0">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+								Recent <i class="caret"></i>
+							</a>
+							<ul class="dropdown-menu" role="menu">
+								<!-- ko foreach: recents -->
+									<li>
+										<a data-bind="attr: { href: href}">
+											<img data-bind="attr: { src: image }" class="img-thumbnail" style="max-width: 70px; max-height: 70px" />
+											<span data-bind="text: name"></span>
+										</a>
+									</li>
+								<!-- /ko -->
+							</ul>
+						</li>
+					</ul>
+					<form class="navbar-form navbar-left" role="search">
+						<div class="form-group">
+							<input type="text"
+							       class="form-control"
+										 placeholder="instagram_username"
+										 data-bind="value: inputUsername" />
+						</div>
+						<button class="btn btn-default"
+							      id="submit"
+							      data-bind="click: submit">
+							Submit
+						</button>
+					</form>
+				</div><!-- /.navbar-collapse -->
+			</div>
+		</nav>
+
+		<!-- User -->
+		<div class="container" data-bind="if: hasUserInfo() == true">
+			<!-- Header, username, etc -->
+			<div class="jumbotron">
+				<div class="container" style="display: flex; align-items: center">
+					<div class="col-md-3 col-md-offset-1">
+						<img data-bind="attr: { src: profilePicture }"
+								 class="img-thumbnail"
+								 alt="profile picture" />
+					</div>
+					<div class="col-md-7">
+						<h1 data-bind="text: username"></h1>
+						<blockquote data-bind="text: bio"></blockquote>
+					</div>
+				</div> <!-- /container -->
+			</div> <!-- /jumbotron -->
+
+			<!-- Load More -->
+			<div class="container">
+				<div class="col-xs-12" style="text-align: center">
+					<p>
+						<span data-bind="text: posts().length"></span>
+						of
+						<span data-bind="text: totalMedia"></span>
+						loaded (<span data-bind="text: visiblePosts().length"></span> shown)
+						<button class="btn btn-success"
+										data-bind="click: loadMore,
+															 visible: visiblePosts().length < totalMedia()">
+							Load More
+						</button>
+						<button class="btn btn-primary"
+						        data-bind="click: sortByLikes,
+										           css: { active: sortBy() == 'likes' }"
+										>
+							Sort by Likes
+						</button>
+						<button class="btn btn-primary"
+						        data-bind="click: sortByDate,
+										           css: { active: sortBy() == 'date' }"
+										>
+							Sort by Date
+						</button>
+					</p>
+				</div>
+			</div>
+
+			<!-- Spinner -->
+			<div class="container" data-bind="if: isLoading() == true">
+				<div class="col-xs-12" style="text-align: center">
+					<img src="./images/spinner.gif" />
+				</div>
+			</div>
+
+			<!-- Photos -->
+			<div class="col-xs-offset-0 col-xs-12 col-md-offset-1 col-md-10 container">
+				<!-- ko foreach: visiblePosts -->
+					<div class="col-xs-5 col-sm-4 col-md-3 small" style="padding-bottom: 20px">
+						<button class="btn btn-default"
+						        data-bind="click: function() { showImage(); }"
+						        >
+							<div style="text-align: center" data-bind="text: createdHR"></div>
+							<img data-bind="attr: { src: thumbnail }" class="img-thumbnail" />
+							<div style="text-align: center">
+								<i class="glyphicon glyphicon-heart"></i>
+								<span data-bind="text: likes"></span>
+							</div>
+						</button>
+					</div>
+				<!-- /ko -->
+			</div>
+
+		</div>
+
+		<!-- Spinner -->
+		<div class="container" data-bind="if: isLoading() == true">
+			<div class="col-xs-12" style="text-align: center">
+				<img src="./images/spinner.gif" />
+			</div>
+		</div>
+
+		<!-- Load More -->
+		<div class="container" data-bind="if: posts().length > 0">
+			<div class="col-xs-12" style="text-align: center">
+				<p>
+					<span data-bind="text: posts().length"></span>
+					of
+					<span data-bind="text: totalMedia"></span>
+					loaded (<span data-bind="text: visiblePosts().length"></span> shown)
+					<button class="btn btn-primary"
+									data-bind="click: loadMore,
+														 visible: visiblePosts().length < totalMedia()">
+						Load More
+					</button>
+				</p>
+			</div>
+		</div>
+
+		<!-- Modal -->
+		<div class="modal fade"
+		     id="imageModal"
+				 tabindex="-1"
+				 role="dialog"
+				 aria-labelledby="imageModalLabel"
+				 aria-hidden="true">
+			<div class="modal-dialog" style="width: 80%; height: 80%">
+				<div class="modal-content">
+					<a data-dismiss="modal" aria-label"close">
+						<div class="modal-body" style="text-align: center">
+							<img id="imageModalImage" class="img" />
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="container" style="padding-top: 50px; padding-bottom: 50px">
+			<i class="glyphicon glyphicon-copyright-mark"></i>
+			Copyright 2015 Rarchives
+		</div>
+	</body>
+
+</html>
