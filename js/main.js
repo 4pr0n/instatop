@@ -90,6 +90,10 @@ var ViewModel = function() {
 	this.getUser = function() {
 		this.reset();
 		self.username(self.inputUsername());
+		if (self.username() === null) {
+			self.getRecents();
+			return;
+		}
 		self.hasUserInfo(false);
 		self.isLoading(true);
 		$.getJSON('./api.cgi?user=' + self.username() + '&method=init')
@@ -280,6 +284,8 @@ var ViewModel = function() {
 		var hash = window.location.hash;
 		if (hash === '') {
 			// Load defaults
+			self.inputUsername(null);
+			self.getUser();
 			return;
 		}
 		var user = hash.substring(1);
