@@ -16,7 +16,7 @@ class InstagramWrapper:
 		for user in users:
 			if user['username'] == username:
 				return user['id']
-		raise Exception("Username not found")
+		raise Exception("Username '%s' not found" % username)
 
 	@staticmethod
 	def get_posts(user_id, max_id=None, min_id=None):

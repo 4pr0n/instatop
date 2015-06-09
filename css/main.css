@@ -1,0 +1,16 @@
+.videoThumbnail {
+	position: relative;
+	top: -115px;
+	height: 0px;
+	font-size: 3.0em;
+	text-shadow: 0px 0px 15px #000;
+}
+
+.arrowButton {
+	font-size: 3.0em;
+}
+.arrowButton:hover {
+	text-decoration: none;
+	cursor: pointer;
+	text-shadow: 0px 0px 15px #fff;
+}

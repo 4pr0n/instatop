@@ -14,6 +14,7 @@
 		<link rel="stylesheet" href="./css/bootstrap-theme.min.css">
 		<link rel="stylesheet" href="./css/toastr.css">
 		<link rel="stylesheet" href="./css/bootstrap-slate.min.css">
+		<link rel="stylesheet" href="./css/main.css">
 
 		<script src="./js/jquery-1.11.2.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
@@ -39,7 +40,9 @@
 						<span class="icon-bar"></span>
 						<span class="icon-bar"></span>
 					</button>
-					<a class="navbar-brand" href="./">InstaTop</a>
+					<a class="navbar-brand" href="./" style="position: relative; top: -10px">
+						<img src="./images/icon-xxs.png" style="line-height: 0px" />
+					</a>
 				</div>
 
 				<!-- Collect the nav links, forms, and other content for toggling -->
@@ -99,10 +102,12 @@
 			<div class="container">
 				<div class="col-xs-12" style="text-align: center">
 					<p>
-						<span data-bind="text: posts().length"></span>
+						<span data-bind="text: visiblePosts().length"></span>
 						of
-						<span data-bind="text: totalMedia"></span>
-						loaded (<span data-bind="text: visiblePosts().length"></span> shown)
+						<span data-bind="text: posts().length"></span>
+						loaded (<span data-bind="text: totalMedia"></span> total)
+					</p>
+					<p>
 						<button class="btn btn-success"
 										data-bind="click: loadMore,
 															 visible: visiblePosts().length < totalMedia()">
@@ -140,6 +145,9 @@
 						        >
 							<div style="text-align: center" data-bind="text: createdHR"></div>
 							<img data-bind="attr: { src: thumbnail }" class="img-thumbnail" />
+							<div class="videoThumbnail" data-bind="if: type == 'video'">
+								<span class="glyphicon glyphicon-play"></span>
+							</div>
 							<div style="text-align: center">
 								<i class="glyphicon glyphicon-heart"></i>
 								<span data-bind="text: likes"></span>
@@ -175,6 +183,34 @@
 			</div>
 		</div>
 
+		<!-- Main page / recents -->
+		<div class="container" data-bind="if: !username()">
+			<div class="jumbotron">
+				<div class="container" style="display: flex; align-items: center">
+					<div class="col-md-8 col-offset-2">
+						<img style="float:left; padding-right: 20px" src="./images/icon-md.png" />
+						<h1> InstaTop</h1>
+						<p>
+							This site shows the top posts for instragram users.
+						</p>
+					</div>
+				</div> <!-- /container -->
+			</div> <!-- /jumbotron -->
+			<div class="container" data-bind="if: recents().length > 0">
+				<h1 style="text-align: center">Recent Users</h1>
+				<!-- ko foreach: recents -->
+					<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+						<button class="btn btn-primary"
+						        data-bind="click: function() { window.location.hash = name }"
+						        style="width: 100%; text-align: left">
+							<img data-bind="attr: { src: image }" class="img-thumbnail" style="max-width: 140px; max-height: 140px" />
+							<span style="font-weight: bold" data-bind="text: name"></span>
+						</button>
+					</div>
+				<!-- /ko -->
+			</div>
+		</div> <!-- /Main page container -->
+
 		<!-- Modal -->
 		<div class="modal fade"
 		     id="imageModal"
@@ -183,11 +219,16 @@
 				 aria-labelledby="imageModalLabel"
 				 aria-hidden="true">
 			<div class="modal-dialog" style="width: 80%; height: 80%">
-				<div class="modal-content">
-					<a data-dismiss="modal" aria-label"close">
-						<div class="modal-body" style="text-align: center">
-							<img id="imageModalImage" class="img" />
-						</div>
+				<div class="modal-content" style="text-align: center; vertical-align: middle">
+					<a id="prevImage" class="arrowButton">
+						<i class="glyphicon glyphicon-chevron-left"></i>
+					</a>
+
+					<span id="imageModalContent" class="modal-body">
+					</span>
+
+					<a id="nextImage" class="arrowButton">
+						<i class="glyphicon glyphicon-chevron-right"></i>
 					</a>
 				</div>
 			</div>

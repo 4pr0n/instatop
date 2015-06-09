@@ -27,7 +27,7 @@ def main():
 	if 'user' not in keys:
 		raise Exception("Required 'user' not found")
 
-	controller = InstagramController(keys['user'])
+	controller = InstagramController(keys['user'].lower())
 
 	# Requeting a user for the first time
 	if keys['method'] == 'init':

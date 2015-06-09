@@ -32,7 +32,6 @@ class InstagramController(AbstractController):
 		else:
 			self.hit_newest_post = True
 
-
 		self.update_recent()
 		self.save()
 
@@ -46,26 +45,37 @@ class InstagramController(AbstractController):
 		
 	def save(self):
 		self.user.current_media = len(self.user.posts)
-		self.user.posts.sort(key=lambda x: x['likes'], reverse=True)
 		f = open(self.get_save_file(), 'w')
 		f.write(self.user.serialize())
 		f.close()
 
 	def get_posts(self):
-		if not self.user.hit_newest_post:
+		if not self.user.hit_newest_post or self.user.hit_oldest_post:
 			# Get newest posts first
 			posts = self.get_newer_posts()
 		else:
 			# We have newest post, get older posts now
 			posts = self.get_older_posts()
-		self.user.posts.extend(posts)
+
+		# Find posts that we don't have yet.
+		new_posts = []
+		for post in posts:
+			already_exists = False
+			for exist in self.user.posts:
+				if exist['id'] == post['id']:
+					already_exists = True
+					break
+			if already_exists:
+				continue
+			new_posts.append(post)
+
+		self.user.posts.extend(new_posts)
 		self.user.posts.sort(key=lambda x: int(x['created']), reverse=True)
-		self.user.max_id = posts[0]['id']
-		self.user.min_id = posts[-1]['id']
-		print '[asdf] min_id = %s' % self.user.min_id
-		print '[asdf] max_id = %s' % self.user.max_id
+		if len(posts) > 0:
+			self.user.max_id = self.user.posts[0]['id']
+			self.user.min_id = self.user.posts[-1]['id']
 		self.save()
-		return posts
+		return new_posts
 
 
 	def has_older_posts(self):
@@ -73,19 +83,15 @@ class InstagramController(AbstractController):
 
 
 	def get_older_posts(self):
-		print "[asdf] getting older posts"
 		posts = InstagramWrapper.get_posts(self.user.id, max_id=self.user.min_id)
-		if len(posts) < 20:
-			print "[asdf] HIT OLDEST POST"
+		if len(posts) < 20 or self.user.min_id == None:
 			self.user.hit_oldest_post = True
 		return posts
 
 
 	def get_newer_posts(self):
-		print "[asdf] getting newer posts"
 		posts = InstagramWrapper.get_posts(self.user.id, min_id=self.user.max_id)
-		if len(posts) < 20:
-			print "[asdf] HIT NEWEST POST"
+		if len(posts) < 20 or self.user.max_id == None:
 			self.user.hit_newest_post = True
 		return posts
 

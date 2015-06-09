@@ -1,6 +1,6 @@
 var ViewModel = function() {
 	var self = this;
-	this.inputUsername = ko.observable("russianbaby_mfc");
+	this.inputUsername = ko.observable();
 	this.username = ko.observable(this.inputUsername());
 
 	this.isLoading = ko.observable(false);
@@ -15,7 +15,6 @@ var ViewModel = function() {
 		if (self.sortBy() === 'date') {
 			// Sort by date
 			self.posts.sort(function(a,b) {
-				console.log('date', b,a, b.created, a.created);
 				return parseInt(b.created) - parseInt(a.created);
 			});
 		}
@@ -25,9 +24,14 @@ var ViewModel = function() {
 				return b.likes - a.likes;
 			});
 		}
+		// Update indices
+		for (var i = 0; i < self.posts().length; i++) {
+			self.posts()[i].index = i;
+		}
 		self.visiblePosts(self.posts().slice(0, self.visiblePostsSize()));
 		self.isLoading(false);
 	};
+
 	this.sortByLikes = function() {
 		self.sortBy('likes');
 	};
@@ -65,7 +69,6 @@ var ViewModel = function() {
 			.done(function(data) {
 				if (data.error && data.stack) {
 					toastr.error("Error: " + data.error);
-					toastr.error("Trace: " + data.stack);
 					console.log(data.error, data.stack);
 					return;
 				}
@@ -74,7 +77,6 @@ var ViewModel = function() {
 					data[i].href = "#" + data[i].name;
 				}
 				self.recents(data);
-				toastr.info("Loaded " + data.length + " recent users");
 			})
 			.fail(function(x,y,z) {
 				toastr.error("Failed to get list of recent users");
@@ -94,8 +96,8 @@ var ViewModel = function() {
 			.done(function(data) {
 				if (data.error && data.stack) {
 					toastr.error("Error: " + data.error);
-					toastr.error("Trace: " + data.stack);
 					console.log(data.error, data.stack);
+					self.isLoading(false);
 					return;
 				}
 				self.profilePicture(data.profile_picture);
@@ -108,7 +110,6 @@ var ViewModel = function() {
 					tempArray.push(p);
 				}
 				self.posts(tempArray);
-				self.visiblePosts(self.posts().slice(0, self.visiblePostsSize()));
 				self.sortPosts();
 				self.totalMedia(data.total_media);
 				self.currentMedia(data.current_media);
@@ -122,7 +123,7 @@ var ViewModel = function() {
 				}
 			})
 			.fail(function(x,y,z) {
-				toastr.error("Failed to get user: " + z);
+				toastr.error("Failed to get posts for " + self.username() + ", status code: " + x.statusCode() + ", error: " + y);
 				console.log("ERROR", x, y, z);
 				self.isLoading(false);
 			});
@@ -164,7 +165,7 @@ var ViewModel = function() {
 				self.sortPosts();
 			})
 			.fail(function(x,y,z) {
-				toastr.error("Failed to get user: " + z);
+				toastr.error("Failed to get posts for " + self.username() + ", status code: " + x.statusCode() + ", error: " + y);
 				console.log("ERROR", x, y, z);
 			})
 			.always(function() {
@@ -182,32 +183,103 @@ var ViewModel = function() {
 		return result;
 	};
 
-	this.showImage = function(url) {
-		$('#imageModalImage').attr('src', url);
-		$('#imageModal').modal('show');
-	};
 
 	var Post = function(json) {
 		var postSelf = this;
 		this.thumbnail = json.images.thumbnail.url;
 		if (json.type === 'video') {
-			this.image = json.videos.standard_resolution.url;
+			this.type = 'video';
+			this.image = json.images.standard_resolution.url;
+			this.video = json.videos.standard_resolution.url;
+			this.width = json.videos.standard_resolution.width;
+			this.height = json.videos.standard_resolution.height;
 		}
 		else {
+			this.type = 'image';
 			this.image = json.images.standard_resolution.url;
+			this.width = json.images.standard_resolution.width;
+			this.height = json.images.standard_resolution.height;
 		}
 		this.created = json.created;
 		this.createdHR = self.toHRDate(this.created);
 		this.likes = json.likes;
 		this.showImage = function() {
-			$('#imageModalImage').attr('src', postSelf.image);
-			$('#imageModal').modal('show');
+			if (postSelf.type === 'image') {
+				// Show image
+				var $img = $('#imageModalContent img');
+				if ($img.size() === 0) {
+					$('#imageModalContent')
+						.empty()
+						.unbind('click')
+						.bind('click', function() {
+							$('#imageModal').modal('hide');
+						});
+					$img = $('<img />')
+						.attr('src', postSelf.image)
+						.css({
+							'width' : postSelf.width + 'px',
+							'height': postSelf.height + 'px'
+						})
+						.appendTo( $('#imageModalContent') );
+				}
+				else {
+					// Clear existing image
+					$img.attr('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==');
+					// Load new image
+					$img
+						.attr('src', postSelf.image)
+						.css({
+							'width' : postSelf.width + 'px',
+							'height': postSelf.height + 'px'
+						})
+				}
+			}
+			else if (postSelf.type === 'video') {
+				// Show video
+				$('#imageModalContent')
+					.empty()
+					.unbind('click');
+				var $controls = $('<video controls id="imageModalVideo" />')
+					.appendTo( $('#imageModalContent') );
+				$('<source type="video/mp4"/>')
+					.attr('src', postSelf.video)
+					.attr('autoload', 'true')
+					.appendTo( $controls );
+			}
+			// Prev image
+			if (postSelf.index === 0) {
+				$('#prevImage').css('visibility', 'hidden');
+			}
+			else {
+				$('#prevImage')
+					.css('visibility', 'visible')
+					.unbind('click')
+					.click(function() {
+						self.posts()[postSelf.index - 1].showImage();
+					});
+			}
+			// Next image
+			if (postSelf.index === self.posts().length - 1) {
+				$('#nextImage').css('visibility', 'hidden');
+			}
+			else {
+				$('#nextImage')
+					.css('visibility', 'visible')
+					.unbind('click')
+					.click(function() {
+						self.posts()[postSelf.index + 1].showImage();
+					});
+			}
+			if (!$('#imageModal').is(':visible')) {
+				$('#imageModal').modal('show');
+			}
 		};
 	}
 
 	this.loadFromHash = function() {
 		var hash = window.location.hash;
 		if (hash === '') {
+			// Load defaults
 			return;
 		}
 		var user = hash.substring(1);
@@ -224,6 +296,23 @@ $(document).ready(function() {
 	vm.loadFromHash();
 	$(window).on('hashchange', function() {
 		vm.loadFromHash();
+	});
+
+	$('#imageModal').on('hidden.bs.modal', function () {
+		$('#imageModalContent').empty();
+	});
+	$('body').keydown(function(e) {
+		if (e.keyCode === 37) { 
+			// Left
+			if ($('#imageModal').is(':visible')) {
+				$('#prevImage').click();
+			}
+		} else if (e.keyCode === 39) {
+			// Right
+			if ($('#imageModal').is(':visible')) {
+				$('#nextImage').click();
+			}
+		}
 	});
 });
 
