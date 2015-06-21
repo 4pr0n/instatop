@@ -18,10 +18,39 @@ var ViewModel = function() {
 				return parseInt(b.created) - parseInt(a.created);
 			});
 		}
-		else {
+		else if (self.sortBy() === 'likes') {
 			// Sort by likes
 			self.posts.sort(function(a,b) {
 				return b.likes - a.likes;
+			});
+		}
+		else if (self.sortBy() === 'weight') {
+			// Sort by date
+			self.posts.sort(function(a,b) {
+				return parseInt(b.created) - parseInt(a.created);
+			});
+			var avgFirstFive = 0,
+					avgLastFive = 0;
+			var len = self.posts().length;
+			var subsetSize = parseInt(len * 0.1);
+			for (var i = 0; i < subsetSize; i++) {
+				console.log(i, self.posts()[i].likes);
+				avgFirstFive += self.posts()[i].likes;
+			}
+			for (var i = len - subsetSize; i < len; i++) {
+				console.log(i, self.posts()[i].likes);
+				avgLastFive += self.posts()[i].likes;
+			}
+			avgFirstFive = avgFirstFive / subsetSize;
+			avgLastFive  = avgLastFive  / subsetSize;
+			var diff = avgFirstFive - avgLastFive;
+			for (var i = 0; i < len; i++) {
+				var factor = diff * (i + 1 / parseFloat(len));
+				self.posts()[i].weight = self.posts()[i].likes * factor;
+			}
+
+			self.posts.sort(function(a,b) {
+				return b.weight - a.weight;
 			});
 		}
 		// Update indices
@@ -37,6 +66,9 @@ var ViewModel = function() {
 	};
 	this.sortByDate = function() {
 		self.sortBy('date');
+	};
+	this.sortByWeight = function() {
+		self.sortBy('weight');
 	};
 
 	this.reset = function() {

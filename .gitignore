@@ -1,3 +1,5 @@
 *.pyc
 users/
 *.swp
+.DS_Store
+TODO

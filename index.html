@@ -125,6 +125,12 @@
 										>
 							Sort by Date
 						</button>
+						<button class="btn btn-primary"
+						        data-bind="click: sortByWeight,
+						                   css: { active: sortBy() == 'weight' }"
+										>
+							Weighted Sort
+						</button>
 					</p>
 				</div>
 			</div>
